@@ -302,6 +302,8 @@ def tripleDes (key,plainText):# Đức
     des = DES()
     des2 = DES()
     des3 = DES()
+    if len(plainText) % 2 != 0:
+        print("Input is not valid hexadecimal string. Permitted characters are: [a-fA-F0-9 \n\r\t\-] and the string must have even length.")
     key = des.split_long_text(key,16)
     # encryption
     ciphertext1 = des.encrypt(key[0], plainText)
@@ -324,7 +326,7 @@ key2 = "BBCC1938472AEEFF"
 key3 = "CCDD28495B3EAAFF"
 key = key1 + key2 + key3 # 24 byte = 192 bit
 #plain_text = "123456ABCD132536"
-plain_text = "123456ABCD132536789123" #11 byte
+plain_text = "123456ABCD132536123456ABCD1325" #15 byte
 tripleDes(key, plain_text)
 
 #expected : 0C86BD298CE7B5A3EFA357ABE376CEEA
