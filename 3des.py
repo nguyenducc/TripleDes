@@ -139,11 +139,14 @@ def binary_to_hex(binary_list):
     hex_string = ''.join([hex(int(''.join(map(str, binary_list[i:i+4])), 2))[2:].upper() for i in range(0, len(binary_list), 4)])
     return hex_string
 
+
+
 class DES:
     def __init__(self):
         self.key_text = ""
         self.plain_text = ""
         self.all_keys = []
+        self.len_plaintext = 0
       
     @staticmethod
     #performs left shift
@@ -249,8 +252,18 @@ class DES:
         self.key_text = key
         self.plain_text = pln_text
         self.createKeys(key) # Hiếu , Linh
-        str_bitarray = str_to_bitarray(pln_text)
-        temp_array = self.perms_on_plaintext(str_bitarray, False) # Luân
+        s = ""
+        self.len_plaintext = len(pln_text)
+        str_bitarray = str_to_bitarray(pln_text) # chuoi bit
+        while len(str_bitarray)%64 != 0:
+            str_bitarray.append(0)
+        bitarray = self.split_long_text(str_bitarray,64)
+        for i in range(0,len(bitarray)):
+            s = s + self.encrypt_main(bitarray[i])
+        return s     
+        
+    def encrypt_main(self, bit_arr):
+        temp_array = self.perms_on_plaintext(bit_arr, False) # Luân
         round_performed_array = self.performRounds(temp_array, True) # Minh , TRung, Quang , Sơn, Đăng, Hiền
         ciphertext = self.perms_on_plaintext(round_performed_array, True) #Luân
         return binary_to_hex(ciphertext)
@@ -258,11 +271,21 @@ class DES:
     def decrypt(self, encrypted_text, key_text):
         self.key_text = key_text
         self.createKeys(key_text)
+        s = ""
         bit_array = str_to_bitarray(encrypted_text)
-        inversed_array = self.perms_on_plaintext(bit_array, False)
+        while len(bit_array)%64 != 0:
+            bit_array.append(0)
+        bitarray = self.split_long_text(bit_array,64)
+        for i in range(0,len(bitarray)):
+            s = s + self.decrypt_main(bitarray[i])
+        return s     
+    
+    def decrypt_main(self,bit_arr):
+        inversed_array = self.perms_on_plaintext(bit_arr, False)
         temp_array = self.performRounds(inversed_array, False)
         straight_array = self.perms_on_plaintext(temp_array, True)
         return binary_to_hex(straight_array)
+
 '''
 des = DES()
 key = "BBCC1938472AEEFF"
@@ -274,32 +297,34 @@ dec_text = des.decrypt(ciphertext, key)
 print("Decrypted Text is: " + dec_text)
 
 '''
-def tripleDes (key1, key2, key3, plainText):# Đức
+def tripleDes (key,plainText):# Đức
     print("Plain text is " + plainText)
     des = DES()
     des2 = DES()
     des3 = DES()
+    key = des.split_long_text(key,16)
     # encryption
-    ciphertext1 = des.encrypt(key1, plainText)
+    ciphertext1 = des.encrypt(key[0], plainText)
     #print("Encrypted Text1 is: " +ciphertext1)
-    ciphertext2 = des2.decrypt(ciphertext1,key2)
+    ciphertext2 = des2.decrypt(ciphertext1,key[1])
     #print("Decrypted Text1 is: " +ciphertext2)
-    ciphertext3 = des3.encrypt(key3, ciphertext2)
+    ciphertext3 = des3.encrypt(key[2], ciphertext2)
     print("Encrypted Text is: " +ciphertext3)
 
     # decryption
-    dec_text1 = des3.decrypt(ciphertext3, key3)
+    dec_text1 = des3.decrypt(ciphertext3, key[2])
     #print("Decrypted Text1 is: " + dec_text1)
-    dec_text2 = des2.encrypt(key2,dec_text1)
+    dec_text2 = des2.encrypt(key[1],dec_text1)
     #print("Encrypted Text2 is: " + dec_text2)
-    dec_text3  = des.decrypt(dec_text2, key3)
-    print("Decrypted Text is: " + dec_text3)
+    dec_text3  = des.decrypt(dec_text2, key[0])
+    print("Decrypted Text is: " + dec_text3[0:des.len_plaintext])
     
-key1 = "AABB09182736CCDD"
+key1 = "AABB09182736CCDD" # 8 byte
 key2 = "BBCC1938472AEEFF"
 key3 = "CCDD28495B3EAAFF"
-plain_text = "123456ABCD132536"
+key = key1 + key2 + key3 # 24 byte = 192 bit
+#plain_text = "123456ABCD132536"
+plain_text = "123456ABCD132536789123" #11 byte
+tripleDes(key, plain_text)
 
-tripleDes(key1,key2,key3,plain_text)
-
-#expected : 0c	86	bd	29	8c	e7	b5	a3	
+#expected : 0C86BD298CE7B5A3EFA357ABE376CEEA
